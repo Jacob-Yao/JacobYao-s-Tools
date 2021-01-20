@@ -1,84 +1,167 @@
 import csv
-import os
+import os, time, random, glob
 from tqdm import tqdm
 import numpy as np
-from random import shuffle
-import cv2
-from PIL import Image
-import glob
 
+# path options
+DATASET_NAME = 'nyu_depth_v1&v2'
+FILE_TYPE_LIST = ['.png', '.h5']
+ROOT_PATH = os.getcwd()
+FOLDER_LIST = [['nyu_depth_v1/image', 'nyu_depth_v1/depth'],
+                ['nyu_depth_v2/image', 'nyu_depth_v2/depth']]
 
-FILE_TYPE_0 = '.png'
-FILE_TYPE_1 = '.h5'
-
+# pipeline controll
 EXIST_CHECK = True
-TYPE_CHECK = True
-SIZE_CHECK = False
+TYPE_CHECK = False
+CONTENT_CHECK = False
 
-path = os.getcwd()
-path_list = [['nyu_depth_v1/image', 'nyu_depth_v1/depth'],
-            ['nyu_depth_v2/image', 'nyu_depth_v2/depth']]
+# display & output options
+ABS_PATH = True
+SHUFFLE = True
+DISP_WARNS = True
+FILE_PROTECTION = True
 
-            
-# hello
-print('Will generate csv file for NYU-depth V1 & V2 dataset.')
-print('The path is set to \" {} \".'.format(path))
-print('Search for \"{}\" and \"{}\".'.format(FILE_TYPE_0, FILE_TYPE_1))
-print('Continue? (yes)')
-my_opt = input()
-if not my_opt=='yes':
-    print('Operation aborted')
-    quit()
+if __name__ == '__main__':
+    main()
 
-# root path check
-if not os.path.exists(path):
-    raise Exception('Path not exist!')
+def main():
+    prt_hello()
+    path_list = pre_scan()
+    path_list = validation(path_list)
 
-# start scanning
-output_list = []
-for idx in range(len(path_list)):
-    path_tuple = path_list[idx]
-    g = glob.glob(os.path.join(path, path_tuple[0], '*'+FILE_TYPE_0))
-    for f in g:  
-        f2 = f.replace(path_tuple[0], path_tuple[1]).replace(FILE_TYPE_0, FILE_TYPE_1)
-        output_list.append([f, f2])
+    print('-------------->>>>> Scan Finished <<<<<--------------')
+    prt_asksave()
+    save_files(path_list)
 
-# Scan report
-print('Scan finished! Totally {} pairs.'.format(len(output_list)))
-print('Validating file existence...')
+    
+def pre_scan():
+    output_list = []
+    # search folder pairs
+    for folder_tuple in tqdm(FOLDER_LIST):
+        g = glob.glob(os.path.join(ROOT_PATH, path_tuple[0], '*'+FILE_TYPE_0))
+        for f in g:  
+            f2 = f.replace(path_tuple[0], path_tuple[1]).replace(FILE_TYPE_0, FILE_TYPE_1)
+            if ABS_PATH:
+                output_list.append([f, f2])
+            else:
+                output_list.append([f.replace(ROOT_PATH,''), f2.replace(ROOT_PATH,'')])
+    print('Scan finished! Totally {} pairs.'.format(len(path_list)))
+    return output_list
+
 
 # Validation
-pbar = tqdm(output_list)
-validated_output_list = []
-for pathpair in pbar:
-    if EXIST_CHECK:
-        if not (os.path.exists(pathpair[0]) and os.path.exists(pathpair[1])):
-            print('Path not exist: ', pathpair )
-            continue 
-    if TYPE_CHECK:
-        if not (pathpair[0][-len(FILE_TYPE_0):]==FILE_TYPE_0 or pathpair[1][-len(FILE_TYPE_1):]==FILE_TYPE_1):
-            print('Path not valid: ', os.path.split(pathpair[0])[-1], os.path.split(pathpair[1])[-1])
-            continue 
-    if SIZE_CHECK:
-        a = Image.open(pathpair[0], mode="r")
-        b = Image.open(pathpair[1], mode="r")
-        if not a.size==b.size:
-            print('Skip size not match: ', os.path.split(pathpair[0])[-1], os.path.split(pathpair[1])[-1])
-            continue
-    # add to list
-    validated_output_list.append(pathpair)
-output_list = validated_output_list
+def validation(output_list):
+    print('Validating file existence...')
+    validated_output_list = []
+    for pathpair in tqdm(output_list):
+        if EXIST_CHECK:
+            # Existancy check for all element
+            if not all(os.path.exists(x) for x in pathpair):
+                if DISP_WARNS: print('Skip path not exist: ', pathpair )
+                continue 
+        if TYPE_CHECK:
+            # Type check for all element; 1 to 1, not applicable to some situations
+            if not all(pathpair[i][-len(FILE_TYPE_LIST[i]):]==FILE_TYPE_LIST[i] for i in range(len(FILE_TYPE_LIST))):
+                if DISP_WARNS: print('Skip path not valid: ', pathpair)
+                continue 
+        if CONTENT_CHECK:
+            result = content_check(pathpair)
+            if not result:
+                if DISP_WARNS: print('Skip content check fail: ', pathpair)
+                continue
+        # add to list
+        validated_output_list.append(pathpair)
+    print('Validation finished! Totally {} valid pairs.'.format(len(validated_output_list)))
+    return validated_output_list
 
-# prepare to save
-print('Validation finished! Totally {} valid pairs.'.format(len(output_list)))
-shuffle(output_list)
-train_list = output_list[:int(0.9*len(output_list))]
-val_list = output_list[int(0.9*len(output_list)) : int(0.95*len(output_list))]
-test_list = output_list[int(0.95*len(output_list)):]
 
-# ask
-print('Save? (Enter)')
-input()
+# content check
+def content_check(pathpair):
+    # import cv2
+    # a = cv2.imread(pathpair[0])
+    # b = cv2.imread(pathpair[1])
+    # if a.shape==b.shape:
+    #     return True
+    # else:
+    #     return False
+    return True
+
+
+def save_files(output_list):
+    # file backup
+    protect_names = ['list_train.csv', 'list_val.csv', 'list_test.csv', 'list_full.csv']
+    if any(os.path.exists(x) for x in protect_names):
+        bak_folder = 'CSV_BACKUP_' + time.strftime("%Y%m%d-%H%M%S", time.localtime())
+        os.mkdir(bak_folder)
+        for f in protect_names:
+            if os.path.exists(f)
+                shutil.move(f, os.path.join(bak_folder, f)) 
+
+    # shuffle
+    if SHUFFLE:
+        random.shuffle(output_list)
+
+    # save
+    train_list = output_list[:int(0.9*len(output_list))]
+    val_list = output_list[int(0.9*len(output_list)) : int(0.95*len(output_list))]
+    test_list = output_list[int(0.95*len(output_list)):]
+
+    with open("list_train.csv", "w") as csvFile:
+        writer = csv.writer(csvFile)
+        for pathpair in train_list:
+            writer.writerow(pathpair)
+
+    with open("list_val.csv", "w") as csvFile:
+        writer = csv.writer(csvFile)
+        for pathpair in val_list:
+            writer.writerow(pathpair)
+
+    with open("list_test.csv", "w") as csvFile:
+        writer = csv.writer(csvFile)
+        for pathpair in test_list:
+            writer.writerow(pathpair)
+
+    with open("list_full.csv", "w") as csvFile:
+        writer = csv.writer(csvFile)
+        for pathpair in output_list:
+            writer.writerow(pathpair)
+
+    # protect
+    if FILE_PROTECTION:
+        os.chmod("list_full.csv", 0o555)
+
+
+def prt_hello():
+    # path validation
+    if not os.path.exists(ROOT_PATH):
+        raise Exception('Root path not exist!')
+    # hello
+    print('---------->>>>> Dataset CSV Generator <<<<<----------')
+    print('Will generate {}csv file for \"{}\" dataset.'.format(
+        '\"protected\" ' if FILE_PROTECTION else '', DATASET_NAME))
+    print('The root path is set to \"{}\".'.format(ROOT_PATH))
+    print('Search for \"{}\" and \"{}\" with {}\"{}\" paths.'.format(
+        FILE_TYPE_0, FILE_TYPE_1, 
+        '\"shuffled\" ' if SHUFFLE else '', 
+        'absolute' if ABS_PATH else 'relative'))
+    print('Continue? (yes)')
+    my_opt = input()
+    if not my_opt=='yes':
+        print('------------>>>>> Operation Aborted <<<<<------------')
+        quit()
+    else:
+        print('------------------>>>>> START <<<<<------------------')
+
+def prt_asksave():
+    print('Save files? (save)')
+    my_opt = input()
+    if not my_opt=='save':
+        print('------------>>>>> Operation Aborted <<<<<------------')
+        quit()
+    else:
+        print('----------------->>>>> SAVING <<<<<------------------')
+
+
 
 # save
 csvFile = open("list_train.csv", "w")
