@@ -1,5 +1,5 @@
 import csv
-import os, time, random, glob
+import os, shutil, time, random, glob
 from tqdm import tqdm
 import numpy as np
 
@@ -16,36 +16,25 @@ TYPE_CHECK = False
 CONTENT_CHECK = False
 
 # display & output options
-ABS_PATH = True
+ABS_PATH = False
 SHUFFLE = True
 DISP_WARNS = True
 FILE_PROTECTION = True
 
-if __name__ == '__main__':
-    main()
-
-def main():
-    prt_hello()
-    path_list = pre_scan()
-    path_list = validation(path_list)
-
-    print('-------------->>>>> Scan Finished <<<<<--------------')
-    prt_asksave()
-    save_files(path_list)
 
     
 def pre_scan():
     output_list = []
     # search folder pairs
     for folder_tuple in tqdm(FOLDER_LIST):
-        g = glob.glob(os.path.join(ROOT_PATH, path_tuple[0], '*'+FILE_TYPE_0))
+        g = glob.glob(os.path.join(ROOT_PATH, folder_tuple[0], '*'+FILE_TYPE_LIST[0]))
         for f in g:  
-            f2 = f.replace(path_tuple[0], path_tuple[1]).replace(FILE_TYPE_0, FILE_TYPE_1)
+            f2 = f.replace(folder_tuple[0], folder_tuple[1]).replace(FILE_TYPE_LIST[0], FILE_TYPE_LIST[1])
             if ABS_PATH:
                 output_list.append([f, f2])
             else:
-                output_list.append([f.replace(ROOT_PATH,''), f2.replace(ROOT_PATH,'')])
-    print('Scan finished! Totally {} pairs.'.format(len(path_list)))
+                output_list.append([f.replace(ROOT_PATH+'/',''), f2.replace(ROOT_PATH+'/','')])
+    print('Scan finished! Totally {} pairs.'.format(len(output_list)))
     return output_list
 
 
@@ -86,7 +75,7 @@ def content_check(pathpair):
     #     return False
     return True
 
-
+# save csv files
 def save_files(output_list):
     # file backup
     protect_names = ['list_train.csv', 'list_val.csv', 'list_test.csv', 'list_full.csv']
@@ -94,7 +83,7 @@ def save_files(output_list):
         bak_folder = 'CSV_BACKUP_' + time.strftime("%Y%m%d-%H%M%S", time.localtime())
         os.mkdir(bak_folder)
         for f in protect_names:
-            if os.path.exists(f)
+            if os.path.exists(f):
                 shutil.move(f, os.path.join(bak_folder, f)) 
 
     # shuffle
@@ -130,6 +119,8 @@ def save_files(output_list):
     if FILE_PROTECTION:
         os.chmod("list_full.csv", 0o555)
 
+    print('--------------->>>>> File Saved <<<<<----------------')
+
 
 def prt_hello():
     # path validation
@@ -140,8 +131,8 @@ def prt_hello():
     print('Will generate {}csv file for \"{}\" dataset.'.format(
         '\"protected\" ' if FILE_PROTECTION else '', DATASET_NAME))
     print('The root path is set to \"{}\".'.format(ROOT_PATH))
-    print('Search for \"{}\" and \"{}\" with {}\"{}\" paths.'.format(
-        FILE_TYPE_0, FILE_TYPE_1, 
+    print('Search for \"{}\" with {}\"{}\" paths.'.format(
+        FILE_TYPE_LIST, 
         '\"shuffled\" ' if SHUFFLE else '', 
         'absolute' if ABS_PATH else 'relative'))
     print('Continue? (yes)')
@@ -163,29 +154,13 @@ def prt_asksave():
 
 
 
-# save
-csvFile = open("list_train.csv", "w")
-writer = csv.writer(csvFile)
-for pathpair in train_list:
-    writer.writerow(pathpair)
-csvFile.close()
+def main():
+    prt_hello()
+    path_list = pre_scan()
+    print('-------------->>>>> Scan Finished <<<<<--------------')
+    path_list = validation(path_list)
+    prt_asksave()
+    save_files(path_list)
 
-csvFile = open("list_val.csv", "w")
-writer = csv.writer(csvFile)
-for pathpair in val_list:
-    writer.writerow(pathpair)
-csvFile.close()
-
-csvFile = open("list_test.csv", "w")
-writer = csv.writer(csvFile)
-for pathpair in test_list:
-    writer.writerow(pathpair)
-csvFile.close()
-
-csvFile = open("list_full.csv", "w")
-writer = csv.writer(csvFile)
-for pathpair in output_list:
-    writer.writerow(pathpair)
-csvFile.close()
-
-print('CSV files saved!')
+if __name__ == '__main__':
+    main()
