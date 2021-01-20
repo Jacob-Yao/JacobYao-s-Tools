@@ -82,7 +82,7 @@ def save_files(output_list):
     if not os.path.exists('CSV_BACKUP'):
         os.mkdir('CSV_BACKUP')
     if any(os.path.exists(x) for x in protect_names):
-        bak_folder = 'CSV_BACKUP/' + time.strftime("%Y%m%d-%H%M%S", time.localtime())
+        bak_folder = 'CSV_BACKUP/' + time.strftime("%Y%m%d-%H%M%S", time.localtime()) + '_create'
         os.mkdir(bak_folder)
         for f in protect_names:
             if os.path.exists(f):
