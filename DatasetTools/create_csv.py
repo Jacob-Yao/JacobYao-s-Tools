@@ -79,8 +79,10 @@ def content_check(pathpair):
 def save_files(output_list):
     # file backup
     protect_names = ['list_train.csv', 'list_val.csv', 'list_test.csv', 'list_full.csv']
+    if not os.path.exists('CSV_BACKUP'):
+        os.mkdir('CSV_BACKUP')
     if any(os.path.exists(x) for x in protect_names):
-        bak_folder = 'CSV_BACKUP_' + time.strftime("%Y%m%d-%H%M%S", time.localtime())
+        bak_folder = 'CSV_BACKUP/' + time.strftime("%Y%m%d-%H%M%S", time.localtime())
         os.mkdir(bak_folder)
         for f in protect_names:
             if os.path.exists(f):
