@@ -90,6 +90,7 @@ def save_files(output_list):
 
     # shuffle
     if SHUFFLE:
+        random.seed(1)
         random.shuffle(output_list)
 
     # save
