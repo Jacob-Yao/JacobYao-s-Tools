@@ -1,0 +1,1 @@
+ffmpeg -i 'Baidu_0036.jpeg' -pix_fmt nv21 test.yuv
