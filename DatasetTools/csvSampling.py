@@ -7,9 +7,10 @@ import numpy as np
 SAMPLE_AMOUNT = 100
 EXISTANCE_STRICT = True
 SHUFFLE = True
+KEEP_NAME = False
 
 CSV_NAME = 'list_train.csv'
-OUTPUT_FOLDER = 'sample_{}_{}'.format(SAMPLE_AMOUNT, time.strftime("%Y%m%d-%H%M%S", time.localtime()))
+OUTPUT_FOLDER = 'SAMPLE_{}_{}'.format(SAMPLE_AMOUNT, time.strftime("%Y%m%d-%H%M%S", time.localtime()))
 
 
 
@@ -62,7 +63,11 @@ def main():
         random.shuffle(path_list)
     for idx in tqdm(range(SAMPLE_AMOUNT)):
         for file_idx in range(len(path_list[idx])):
-            shutil.copy(path_list[idx][file_idx], OUTPUT_FOLDER+'/'+str(file_idx)+'/')
+            if KEEP_NAME:
+                shutil.copy(path_list[idx][file_idx], OUTPUT_FOLDER+'/'+str(file_idx)+'/')
+            else:
+                shutil.copy(path_list[idx][file_idx], OUTPUT_FOLDER+'/'+str(file_idx)+'/'+
+                    '{:0>5d}{}'.format(idx, os.path.splitext(path_list[idx][file_idx])[-1]))
 
     print('------------->>>>> Sampling Finished <<<<<------------')
     print('Saved in {}'.format(OUTPUT_FOLDER))
