@@ -11,6 +11,7 @@ KEEP_NAME = False
 
 CSV_NAME = 'list_train.csv'
 OUTPUT_FOLDER = 'SAMPLE_{}_{}'.format(SAMPLE_AMOUNT, time.strftime("%Y%m%d-%H%M%S", time.localtime()))
+SAVE_CSV = True
 
 
 
@@ -31,6 +32,12 @@ def backup_files(protect_names):
         for f in protect_names:
             if os.path.exists(f):
                 shutil.copy(f, os.path.join(bak_folder, f)) 
+
+def save_csv(csv_list, csv_name):
+    with open(os.path.join(OUTPUT_FOLDER, csv_name), "w") as csvFile:
+        writer = csv.writer(csvFile)
+        for pathpair in csv_list:
+            writer.writerow(pathpair)
 
 def prt_hello():
     # path validation
@@ -59,8 +66,12 @@ def main():
     for i in range(len(path_list[0])):
         os.mkdir(OUTPUT_FOLDER+'/'+str(i)) 
 
+    # Shuffle
     if SHUFFLE:
+        random.seed(1)
         random.shuffle(path_list)
+
+    # sample & save
     for idx in tqdm(range(SAMPLE_AMOUNT)):
         for file_idx in range(len(path_list[idx])):
             if KEEP_NAME:
@@ -68,6 +79,10 @@ def main():
             else:
                 shutil.copy(path_list[idx][file_idx], OUTPUT_FOLDER+'/'+str(file_idx)+'/'+
                     '{:0>5d}{}'.format(idx, os.path.splitext(path_list[idx][file_idx])[-1]))
+
+    # save sample name list
+    if SAVE_CSV:
+        save_csv(path_list[:SAMPLE_AMOUNT], 'names.csv')
 
     print('------------->>>>> Sampling Finished <<<<<------------')
     print('Saved in {}'.format(OUTPUT_FOLDER))

@@ -30,10 +30,11 @@ def pre_scan():
         g = glob.glob(os.path.join(ROOT_PATH, folder_tuple[0], '*'+FILE_TYPE_LIST[0]))
         for f in g:  
             f2 = f.replace(folder_tuple[0], folder_tuple[1]).replace(FILE_TYPE_LIST[0], FILE_TYPE_LIST[1])
-            if ABS_PATH:
-                output_list.append([f, f2])
-            else:
-                output_list.append([f.replace(ROOT_PATH+'/',''), f2.replace(ROOT_PATH+'/','')])
+            output_list.append([f, f2])
+            # if ABS_PATH:
+            #     output_list.append([f, f2])
+            # else:
+            #     output_list.append([f.replace(ROOT_PATH+'/',''), f2.replace(ROOT_PATH+'/','')])
     print('Scan finished! Totally {} pairs.'.format(len(output_list)))
     return output_list
 
@@ -92,6 +93,10 @@ def save_files(output_list):
     if SHUFFLE:
         random.seed(1)
         random.shuffle(output_list)
+
+    # ABS or REL
+    if not ABS_PATH:
+        output_list = [[x.replace(ROOT_PATH+'/','') for x in y] for y in output_list]
 
     # save
     train_list = output_list[:int(0.9*len(output_list))]
